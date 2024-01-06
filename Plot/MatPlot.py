@@ -8,153 +8,67 @@ import time
 from datetime import datetime
 
 import numpy as np
+import pandas as pd
 
-import matplotlib as mpl
-mpl.use("TkAgg")
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import matplotlib.ticker as ticker
 
-def _print_event(event, attr_list):
-    print()
-    print('**** {} ****'.format(event.name))
-    print('    ' + str(type(event)))
-    for attr in attr_list:
-        title = 'event.' + attr
-        value = getattr(event, attr)
-        line = '    {title:20}: {value}'.format(title=title, value=value)
-        print(line)
+def info(ax):
+    ''' Основная информация по графику '''
+    print("bounds", str(ax.get_xbound()), str(ax.get_ybound()))
+    print("zorder:", str(ax.get_axisbelow()))
+    print("scale:", ax.get_xscale(), ax.get_yscale())
+    print("frame:", str(ax.get_frame_on()), str(ax.get_aspect()), str(ax.get_adjustable()))
+    print("ticks:", str(ax.get_xticks()))
+    tl = ax.get_xticklabels()
+    print("tick labels:", tl)
 
-def onMouseEvent(event):
-    # type: (matplotlib.backend_bases.MouseEvent) -> None
-    ''' Обработчик событий, связанных с мышью '''
-    attr_list = ['name',
-                 'dblclick', 'button', 'key',
-                 'xdata', 'ydata',
-                 'x', 'y',
-                 'inaxes',
-                 'step',
-                 'guiEvent']
-    _print_event(event, attr_list)
+def axis(ax, minor=True, margins=(), xticks=None):
+    ''' Манипуляции с осями (в первую очередь - X) '''
+    if minor:
+        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+        ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-def onKeyEvent(event):
-    # type: (matplotlib.backend_bases.KeyEvent) -> None
-    ''' Обработчик событий, связанных с клавиатурой '''
-    attr_list = ['name',
-                 'key',
-                 'xdata', 'ydata',
-                 'x', 'y',
-                 'inaxes',
-                 'guiEvent']
-    _print_event(event, attr_list)
+    if margins:
+        #ax.set_xmargin(margins[0])    # Расширение интервала на %
+        #ax.set_ymargin(margins[1])    # Обрезание на %
+        ax.margins(*margins)            # Тот же эффект (возможны различия без автошкалирования)
 
+    ax.tick_params(which='major', length=10, width=2)
+    ax.tick_params(which='minor', length=1, width=1)
 
-def events():
-    # Расчитываем функцию
-    x = np.arange(0, 5 * np.pi, 0.01)
-    y = np.sin(x) * np.cos(3 * x)
+    ''' Крайне нежелательно, чтобы ticks "ПЕРЕКРЫВАЛ" bounds'''
 
-    # Нарисовать график
-    fig = plt.figure()
-    plt.plot(x, y)
+    # Такая сложная система условий связана с множеством манипуляций
+    # (конкретные значения, значения по умолчанию, отключение, возможно - что-то еще)
+    if xticks:
+        if not xticks[0] is None:
+            ax.set_xticks(xticks[0])
+            if not xticks[1] is None:
+                ax.set_xticklabels(xticks[1])
 
-    # События, связанные с мышью
-    button_press_event_id = fig.canvas.mpl_connect('button_press_event',
-                                                   onMouseEvent)
-    button_release_event_id = fig.canvas.mpl_connect('button_release_event',
-                                                     onMouseEvent)
-    scroll_event_id = fig.canvas.mpl_connect('scroll_event',
-                                             onMouseEvent)
-
-    # События, связанные с клавишами
-    key_press_event_id = fig.canvas.mpl_connect('key_press_event',
-                                                onKeyEvent)
-    key_release_event_id = fig.canvas.mpl_connect('key_release_event',
-                                                  onKeyEvent)
-
-    plt.show()
-
-    # Отпишемся от событий
-    fig.canvas.mpl_disconnect(button_press_event_id)
-    fig.canvas.mpl_disconnect(button_release_event_id)
-    fig.canvas.mpl_disconnect(scroll_event_id)
-    fig.canvas.mpl_disconnect(key_press_event_id)
-    fig.canvas.mpl_disconnect(key_release_event_id)
-
-# custom toolbar with lorem ipsum text
-class CustomToolbar(NavigationToolbar2Tk):
-    def __init__(self,canvas_,parent_):
-        self.toolitems = (
-            ('Home', 'Lorem ipsum dolor sit amet', 'home', 'home'),
-            ('Back', 'consectetuer adipiscing elit', 'back', 'back'),
-            ('Forward', 'sed diam nonummy nibh euismod', 'forward', 'forward'),
-            (None, None, None, None),
-            ('Pan', 'tincidunt ut laoreet', 'move', 'pan'),
-            ('Zoom', 'dolore magna aliquam', 'zoom_to_rect', 'zoom'),
-            (None, None, None, None),
-            ('Subplots', 'putamus parum claram', 'subplots', 'configure_subplots'),
-            ('Save', 'sollemnes in futurum', 'filesave', 'save_figure'),
-            )
-        NavigationToolbar2Tk.__init__(self,canvas_,parent_)
-
-    def pan(self):
-        NavigationToolbar2Tk.pan(self)
-        self.mode = "I'm panning!" #<--- whatever you want to replace "pan/zoom" goes here
-        self.set_message(self.mode)
-
-    def zoom(self):
-        NavigationToolbar2Tk.zoom(self)
-        self.mode = "I'm zooming!" #<--- whatever you want to replace "zoom rect" goes here
-        self.set_message(self.mode)
-
-class MyApp(object):
-    def __init__(self,root):
-        self.root = root
-        self._init_app()
-
-    # here we embed the a figure in the Tk GUI
-    def _init_app(self):
-        self.figure = mpl.figure.Figure()
-        self.ax = self.figure.add_subplot(111)
-        self.canvas = FigureCanvasTkAgg(self.figure,self.root)
-        self.toolbar = CustomToolbar(self.canvas,self.root)
-        self.toolbar.update()
-        self.plot_widget = self.canvas.get_tk_widget()
-        self.plot_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-        self.toolbar.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-        self.canvas.show()
-
-    # plot something random
-    def plot(self):
-        self.ax.imshow(np.random.normal(0.,1.,size=[100,100]),cmap="hot",aspect="auto")
-        self.figure.canvas.draw()
-
-def navigator():
-    root = tk.Tk()
-    app = MyApp(root)
-    app.plot()
-    root.mainloop()
-
-def hist(ax, xdate, candles, size):
-    ''' '''
-
-def simple():
-    x = np.asarray(range(20))
+def simple(ax, size):
+    x = np.arange(size)
     y1 = 4*x
-    y2 = [i**2 for i in x]
+    y2 = np.sin(x)
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    if ax:
+        ax.clear()
+    else:
+        fig, ax = plt.subplots(figsize=(8, 6))
+
     ax.set_title("Графики зависимостей: y1=4*x, y2=x^2", fontsize=16)
     ax.set_xlabel("x", fontsize=14)        
     ax.set_ylabel("y1, y2", fontsize=14)
     ax.grid(which="major", linewidth=1.2)
     ax.grid(which="minor", linestyle="--", color="gray", linewidth=0.5, alpha=0.5)
 
-    ax.scatter(x, y1, c="red", label="y1 = 4*x")
-    ax.plot(x, y2, label="y2 = x^2")
-    ax.bar(x, y2-y1, bottom=x, color='green', width=0.5, zorder=1, label="bars")
+    line, = ax.plot(x, y2, label="y2 = x^2")
+    scs = ax.scatter(x, y1, c="red", label="y1 = 4*x")
+    bars = ax.bar(x, y2-y1, bottom=x, color='green', width=0.5, zorder=1, label="bars")
+    lines = ax.vlines(x, np.log(x+1), np.sqrt(x), colors='blue', linewidths=5, zorder=2, label="lines")
 
-    ax.axhline(y=50, color="red")
+    #ax.axhline(y=50, color="red")
 
     ax.legend()
     ax.text(.200, .400, "Text"
@@ -163,56 +77,183 @@ def simple():
             ,transform=ax.transAxes
             )
 
-    ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
-    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
-
     ax.xaxis.set_zorder(-1)         # спрятать сетку под бары (в вызове grid это не работает)
     ax.yaxis.tick_right()           # ось справа
 
-    ax.tick_params(which='major', length=20, width=2)
-    ax.tick_params(which='minor', length=1, width=1)
-
-    #ax.set_xmargin(0.2)    # Расширение интервала на 20%
-    #ax.set_ymargin(-0.1)   # Обрезание на 10%
-    ax.margins(0.2, -0.1)   # Тот же эффект (возможны различия без автошкалирования)
-
-    ax.set_xbound(2, 8)     # В чем отличие ???
-    ax.set_xlim(1, 10)      # Установка видимой области, перекрывает margins
-    ax.set_ybound(0, 200)     # В чем отличие ???
+    ax.set_xbound(size-20, size)     # В чем отличие ???
+    #ax.set_xlim(5, 11)      # Установка видимой области, перекрывает margins
+    #ax.set_ybound(0, 200)     # В чем отличие ???
     #ax.autoscale(enable=True, axis='y', tight=True) # tight обнуляет margin
 
     #ax.set_axis_off()        # Выключение отображения осей
 
-    ax.set_xticks([2, 4, 6, 8])
-    ax.set_xticklabels(["1", "3", "5"])
+    margins = (0.2, -0.1)
+    xticks = ([2, 4, 6, 8], ["1", "3", "5", "7"])
+    axis(ax, margins=(), xticks=None)#([6,8,10], None))
 
-    print("bounds", str(ax.get_xbound()), str(ax.get_ybound()))
-    print("zorder:", str(ax.get_axisbelow()))
-    print("scale:", ax.get_xscale(), ax.get_yscale())
-    print("frame:", str(ax.get_frame_on()), str(ax.get_aspect()), str(ax.get_adjustable()))
-    print("ticks:", str(ax.get_xticks()))
-    tl = ax.get_xticklabels()
+    info(ax)
+    return ax
+
+def hist(ax, xdate, candles, size):
+    ''' '''
+
+def formatters():
+    '''  '''
+    def timeFormatter(x, pos):
+        print(pos, x)
+        x = x*frame + start
+        if (x < 0):                 # На всякий случай. 
+            return ''               # Иногда то локатор странно себя ведет, то что-то еще
+        dt = datetime.fromtimestamp(x)
+        s = dt.strftime("%H:%M")
+        return s
+
+    xdata = np.arange(1697932800, 1699574400, 1800)
+    size = len(xdata)
+    # !!!Самый надежный и проверенный способ:
+    # нормировать ось x, а все преобразования делать внутри форматтера
+    start = xdata[0]
+    frame = xdata[1] - start
+    x = np.arange(size)
+    ydata = np.log(x+1)
+
+    fig = plt.figure()
+    ax = [0, 0, 0]
+    ax[0] = fig.add_subplot(211)
+    ax[1] = fig.add_subplot(4,1,3, sharex=None)
+    ax[2] = fig.add_subplot(414, sharex=None)
+    fig.subplots_adjust(left=0.05, right=0.97, top=0.97, hspace=0.2, wspace=0.2)
+
+    #  Устанавливаем интервал основных и вспомогательных делений:
+    #ax[2].xaxis.set_major_locator(ticker.IndexLocator(1, 0)) # Почему-то начинается с отступом
+    ax[2].xaxis.set_minor_locator(ticker.AutoMinorLocator(3))
+    ax[2].grid()
+
+    ax[1].xaxis.set_major_locator(ticker.LinearLocator(4))      # Почему-то "инвертирует" ось x
+    #ax[1].xaxis.set_minor_locator(ticker.MultipleLocator(1))    # !!! Вообще лучше никогда не применять!!!
+
+    ax[0].xaxis.set_major_locator(ticker.NullLocator())
+
+    # Создание и Установка форматера для оси X
+    tf = ticker.FuncFormatter(timeFormatter)
+
+    for a in ax:
+        a.xaxis.set_major_formatter(tf)
+        a.plot(x, ydata)
+        a.scatter(x, ydata, c="red")
+
+    # !!! Обязательно должно быть ПОСЛЕ отрисовки!!!
+    ax[2].xaxis.set_major_locator(ticker.LinearLocator(9))      # !!!А здесь не "инвертирует"???
+    ax[2].set_xbound(890, 910)
+    # Чтобы достичь нужного расположения сетки, мало иметь какой-то одинаковый размер фрейма (20)
+    # 891, 911 уже не сработает
 
     plt.show()
 
-import tkinter as tk
-def mptk():
-    root = tk.Tk()
-    parent = tk.Frame(root,width=1500,height=100,bg="darkred", bd=20)  # bd обязателен
+def redraw(plots, flush=True, setx=True, refresh=20):
+    ''' Перерисовка графика в различных комбинациях
+    На данный момент получается, что включение GUI event (plt.ion) МОЖЕТ "подвешивать" график
+    Отчего это зависит - до конца непонятно
+    Выключение (plt.ioff), отсутствующее в оригинальном примере, не помогает
+    Ясно только, что при flush=False точно ничего НЕ работает
+    !!! При refresh>=100 тоже ничего работать не будет'''
+    def init(plots, title=""):
+        ''' Инициализация '''
+        # creating initial data values of x and y
+        x = np.linspace(0, 10, 100)
+        y = np.sin(x)
+ 
+        fig, ax = plt.subplots(plots, figsize=(6, 4), sharex=True)
+        if title:
+            fig.suptitle(title)
+        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, hspace=0, wspace=0.2)
 
-    fig = plt.Figure(figsize=(5, 4), dpi=100)
-    t = np.arange(0, 3, .01)
-    fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+        # to run GUI event loop. Можно включить один раз (вне цикла, без периодических отключений)
+        # Можно делать это в цикле (on/off), или как сейчас.
+        plt.ion()
+        # Расположение до или после изначальной прорисовки судя по весму, ни на что не влияет
 
-    canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        return fig, ax
 
-    toolbar = NavigationToolbar2Tk(canvas, root)
-    toolbar.update()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    def draw(a, ax, lines, t=0, setx=True):
+        ''' Изначальная Прорисовка '''
+        x = np.linspace(0, 10, 100)
+        y = np.sin(x-0.5*t)             # creating new Y values
+        if lines[a]:
+            if setx:                    # Check must we update x axis?
+                lines[a].set_xdata(x+t*.2)  # Только в случае изменения x. Причем это касается
+            lines[a].set_ydata(y)           # не самой оси, а лишь сдвига собственно кривой
+        else:
+            lines[a], = ax[a].plot(x, y)
+            return lines[a]
+ 
+    def _redraw(fig, ax, lines, a, flush=False):
+        ''' Перерисовка '''
+        #plt.ion()
+        if not flush:
+            flush = (a == len(lines)-1) # Сброс только для последнего графика
+        if flush:
+            print("Plot №"+str(a), fig.texts)
+            fig.canvas.draw()       # drawing updated values
+            plt.show()   # Без этих двух строк вроде как ничего не работает
+            #plt.draw()             # Альтернативные способы
+            #fig.show()             # и всевозможные их комбинации ничего не мяняют
+            # Без этого то вообще не прорисовывается, то мерцает при перерисовке.
+            # Не помогает даже установка block=False в plt.show().
+            fig.canvas.flush_events()
+            #  НЕПОНЯТНО, ПОМОГАЕТ или НЕТ, но без этого вроде бы НЕ работаЛО!!!
+            #plt.ioff()                  # Отключение GUI event loop
+            print("Flush!!!", fig.texts)   # работаЛО только в режиме Debug Eclipse!!!
 
-#mptk()
-#simple()
+        # В консоли также зависает на show. Однако, после закрытия окна продолжает спокойно
+        # выполняться цикл (без нового открытия окна)
+
+    def redraw2(plots):
+        ''' Перерисовка графика в режиме "замыкания" для моделирования реальной ситуации '''
+        fig, ax = init(plots, "Closure")
+        lines = [None]*plots
+        def _redraw2(t, a, flush=flush, setx=True):
+            nonlocal lines
+            draw(a, ax, lines, t, setx=setx)
+            _redraw(fig, ax, lines, a, flush=flush)
+        return _redraw2
+
+    fig, ax = init(plots, "Common")
+    lines = [None]*plots
+    for a in range(plots):
+        draw(a, ax, lines, setx=setx)
+
+    _redraw2 = redraw2(plots) 
+    for t in range(50):
+        for a in range(plots):
+            draw(a, ax, lines, t+1, setx=setx)
+            _redraw(fig, ax, lines, a, flush=flush)      # Реализация отдельными функциями
+
+            _redraw2(t, a, setx=setx)       # Замыкание
+        # !!! Ключевой момент - нельзя использовать time.sleep()
+        print("Pause")
+        plt.pause(refresh)
+        # Точнее, можно, но обязательно надо ставить на паузу plt
+        #print("Sleep")                      # Так можно!
+        #time.sleep(refresh)
+        print("StandUp!")
+
+def redraw3():
+    ''' Перерисовка графика в режиме "очистки"
+    !!! Похоже, что это самый правильный и наиболее УНИВЕРСАЛЬНЫЙ способ (работает не только для plot)
+    Главное - обязательно установить block=False '''
+    ax = None
+    for t in range(20):
+        print("Draw!")
+        ax = simple(ax, (t+1)*20)
+        if not t:
+            plt.show(block=False)
+            print("Pause!")
+        plt.pause(5)
+
+#formatters()
 #hist2()
 #axis()
+#redraw(3, flush=False)
+redraw3()
+pass
