@@ -56,6 +56,7 @@ def simple(ax, size):
         ax.clear()
     else:
         fig, ax = plt.subplots(figsize=(8, 6))
+        plt.show(block=False)
 
     ax.set_title("Графики зависимостей: y1=4*x, y2=x^2", fontsize=16)
     ax.set_xlabel("x", fontsize=14)        
@@ -247,7 +248,7 @@ def redraw3():
         print("Draw!")
         ax = simple(ax, (t+1)*20)
         if not t:
-            plt.show(block=False)
+            #plt.show(block=False)    # !!! Ф-ю можно вызвать до начала отрисовок (см. simple())
             print("Pause!")
         plt.pause(5)
 
