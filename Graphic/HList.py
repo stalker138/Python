@@ -48,10 +48,13 @@ if __name__ == "__main__":
 
         # Для каждой строки можно заполнить ячейки (столбцы).
         chk.append(tx.IntVar())
-        check = tk.Checkbutton(tab, text='', variable=chk[i],onvalue=1,offvalue=0)
+        check = tk.Checkbutton(tab, text='', variable=chk[i], onvalue=1, offvalue=0)
         tab.item_create(index, 0, itemtype=tx.WINDOW, window=check)
         tab.item_create(index, 1, text=('Item2 ' , index))
-        tab.item_create(index, 2, text=('Item3 ' + index))
+
+        ev = tx.DoubleVar()
+        entry = tx.Entry(tab, textvariable=ev, justify="right")
+        tab.item_create(index, 2, itemtype=tx.WINDOW, window=entry)
         #  Функция демонстрирует методы конфигурирования ячеек
         # и получения данных.
         def funcgen(index):

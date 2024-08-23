@@ -26,11 +26,11 @@ def subplots():
     !!!Кажется, в данной ситуации возможна только единая конфигурация оси x.
     Причем ее можно назначить для любого окна - она распространится на все.
     Подписи при этом будут только на нижних окнах.'''
-    fig, ax = plt.subplots(3, 2, figsize=(15, 7), sharex=True)
+    fig, ax = plt.subplots(3, 2, figsize=(15, 7), sharex=False)
     fig.suptitle("Super Title", fontsize=15)
     fig.subplots_adjust(left=0.04, right=0.97, bottom=0.04, top=0.96, hspace=0.2, wspace=0.1)
 
-    ax[2][1].xaxis.set_major_locator(ticker.IndexLocator(5, 0))
+    #ax[2][1].xaxis.set_major_locator(ticker.IndexLocator(5, 0))
     ax[1][0].xaxis.set_major_locator(ticker.LinearLocator(4))       # Override previous settings!!!
     #plt.show()
 

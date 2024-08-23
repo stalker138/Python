@@ -68,26 +68,88 @@ but3 = MyButton(fr3, text="Button 3")
 
 def testf(event=None):
     print("Test")
+    select = tree.selection()
+    item = tree.item(select)
+    print("Item:", item["values"])
+
 butw = tk.Button(top, text="Button 4", command=testf)
 #butw.pack()
 
+# Список с множественным выбором (Listbox)
 listbox1=tk.Listbox(fr1,height=5,width=15,selectmode=tk.EXTENDED)
 list1=[u"Москва",u"Санкт-Петербург",u"Саратов",u"Омск"]
 for i in list1:
     listbox1.insert(tk.END,i)
 listbox1.pack()
 
+# Редактируемое поле ввода (Entry)
 val = tk.DoubleVar()
 val.set(1000)
 ent = tk.Entry(fr1, textvariable=val, justify="right")
 ent.pack()
 
+# Кнопки (CheckButton)
 var1=tk.IntVar()
 var2=tk.IntVar()
 check1=tk.Checkbutton(fr1,text='1 пункт',variable=var1,onvalue=1,offvalue=0)
 check2=tk.Checkbutton(fr1,text='2 пункт',variable=var2,onvalue=1,offvalue=0)
 check1.pack()
 check2.pack()
+
+def selection(event):
+    ''' Выбор элемента '''
+    select = tree.selection()
+    item = tree.item(select)
+    print("Item:", item["values"])
+
+# TreeView с обработкой выбора и двойного щелчка
+def table(parent=None, height=0, headings=tuple(), columns=(), config=(), rows=tuple(), tags=()):
+    if not columns:
+        columns = headings
+
+    tv = ttk.Treeview(parent, columns=columns, displaycolumns=columns, height=height, show="headings", selectmode="browse")
+
+    for c, head in enumerate(headings):
+        tv.heading(columns[c], text=head, anchor=tk.CENTER)
+        tv.column(c, None, **config[c])
+
+    for r, row in enumerate(rows):
+        tag = tags[r] if tags else ()
+        tv.insert('', tk.END, values=tuple(row), tags=tag)
+
+    scrolltable = ttk.Scrollbar(parent, command=tv.yview)
+    tv.configure(yscrollcommand=scrolltable.set)
+    scrolltable.pack(side=tk.RIGHT, fill=tk.Y)
+    tv.pack(expand=tk.YES, fill=tk.BOTH)
+
+    return tv
+
+columns = ("#1", "#2", "#3")
+headings = ("Фамилия", "Имя", "Почта")
+config = ({"anchor": tk.W, "width": 60}, {"anchor": tk.W, "width": 40}, {"anchor": tk.W, "width": 60})
+items = (("Family", "Name", "Mail"), 
+        ("Another", "", "Nothing"))
+tag = ("dbl-click",)
+tags = (tag, tag, tag)
+'''# Первыый способ - более универсальный, но посложнее
+tree = ttk.Treeview(fr3, show="headings", columns=columns)
+tree.heading("#1", text="Фамилия")
+tree.heading("#2", text="Имя")
+tree.heading("#3", text="Почта")
+ysb = ttk.Scrollbar(fr3, orient=tk.VERTICAL, command=tree.yview)
+tree.configure(yscroll=ysb.set)
+for c, cfg in enumerate(config):
+    tree.column(c, None, **cfg)
+tree.insert('', tk.END, values=("Family", "Name", "Mail"), tags=tags)
+tree.insert('', tk.END, values=("Another", "", "Nothing"), tags=tags)'''
+tree = table(fr3, columns=columns, headings=headings, config=config, rows=items, tags=tags)
+tree.tag_bind("dbl-click", "<Double-Button-1>", testf)
+tree.bind("<<TreeviewSelect>>", selection)
+#tree.pack()
+
+# Второй способ - попроще
+tree2 = ttk.Treeview(fr3, show="headings", columns=columns)
+tree2.heading("#1", text="Фамилия")
 
 style = ttk.Style()
 data = {}                                                                      

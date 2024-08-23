@@ -4,7 +4,6 @@ Created on 2 апр. 2019 г.
 @author: Stalker
 '''
 
-import time
 from datetime import datetime
 
 import numpy as np
@@ -47,7 +46,7 @@ def axis(ax, minor=True, margins=(), xticks=None):
             if not xticks[1] is None:
                 ax.set_xticklabels(xticks[1])
 
-def simple(ax, size):
+def simple(ax=None, size=10):
     x = np.arange(size)
     y1 = 4*x
     y2 = np.sin(x)
@@ -55,7 +54,7 @@ def simple(ax, size):
     if ax:
         ax.clear()
     else:
-        fig, ax = plt.subplots(figsize=(8, 6))
+        _, ax = plt.subplots(figsize=(8, 6))
         plt.show(block=False)
 
     ax.set_title("Графики зависимостей: y1=4*x, y2=x^2", fontsize=16)
@@ -71,7 +70,7 @@ def simple(ax, size):
 
     #ax.axhline(y=50, color="red")
 
-    ax.legend()
+    #ax.legend()
     ax.text(.200, .400, "Text"
             , color='blue', fontsize=16
             ,horizontalalignment='left', verticalalignment='center'
@@ -252,9 +251,10 @@ def redraw3():
             print("Pause!")
         plt.pause(5)
 
+simple()
 #formatters()
 #hist2()
 #axis()
 #redraw(3, flush=False)
-redraw3()
+#redraw3()
 pass
