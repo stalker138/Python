@@ -15,23 +15,31 @@ import matplotlib.ticker as ticker
 def subplot():
     ''' Размещение нескольких графиков '''
     fig = plt.figure()
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(4,1,3, sharex=ax1)
-    ax3 = fig.add_subplot(414, sharex=ax1)
+    ax1 = fig.add_subplot(221)
+    ax2 = fig.add_subplot(4,2,5, sharex=ax1)
+    ax3 = fig.add_subplot(427, sharex=ax1)
+    ax4 = fig.add_subplot(122)
+    ax4.set_title('Second column')
+    ax2.text(.200, .400, "425", transform=ax2.transAxes)
+    ax3.text(.200, .400, "427", transform=ax3.transAxes)
     fig.subplots_adjust(left=0.05, right=0.97, top=0.97, hspace=0.1, wspace=0.1)
     #plt.show()
 
-def subplots():
+def subplots(*grid):
     ''' Размещение нескольких графиков
     !!!Кажется, в данной ситуации возможна только единая конфигурация оси x.
     Причем ее можно назначить для любого окна - она распространится на все.
     Подписи при этом будут только на нижних окнах.'''
-    fig, ax = plt.subplots(3, 2, figsize=(15, 7), sharex=False)
+    fig, ax = plt.subplots(*grid, figsize=(15, 7), sharex=False)
     fig.suptitle("Super Title", fontsize=15)
     fig.subplots_adjust(left=0.04, right=0.97, bottom=0.04, top=0.96, hspace=0.2, wspace=0.1)
 
+    if (grid == (1,)):
+        ax = np.array([ax])
+    else:
+        ax = ax.flatten()
     #ax[2][1].xaxis.set_major_locator(ticker.IndexLocator(5, 0))
-    ax[1][0].xaxis.set_major_locator(ticker.LinearLocator(4))       # Override previous settings!!!
+    ax[2].xaxis.set_major_locator(ticker.LinearLocator(4))       # Override previous settings!!!
     #plt.show()
 
 def grid1():
@@ -59,8 +67,8 @@ def grid2():
     ax_4 = fg.add_subplot(gs[1, 1])
     ax_4.set_title('w:3, h:0.7')
 
-#subplot()
-subplots()
+subplot()
+#subplots(1)
 #grid1()
 plt.show()
 pass

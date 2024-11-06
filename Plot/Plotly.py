@@ -1,42 +1,28 @@
 '''
 Created on 18 сент. 2020 г.
-
 @author: Alex
+
+Некая альтернатива seaborn (однако, не основанная на matplotlib).
+По-видимому, также слишком высокоуровневая
+Вообще, подобных библиотек бесчисленное множество (bokeh, bqplot, cufflinks, ...)
+Следует сконцентрироваться на одной и не распыляться.
 '''
 
-import sys
 import warnings
 warnings.filterwarnings('ignore')
-from tqdm import tqdm
 
 import pandas as pd
-import numpy as np
-import scipy as sp
-from scipy.stats import boxcox
-from scipy.optimize import minimize
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-
-import statsmodels.formula.api as smf
-import statsmodels.tsa.api as smt
-import statsmodels.api as sm
-
-import matplotlib.pyplot as plt
-
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from plotly.offline import iplot
 from plotly import graph_objs as go
 #init_notebook_mode(connected = True)
 
 def plotly_df(df, title = ''):
-    data = []
-
-    for column in df.columns:
-        trace = go.Scatter(
+    data = [go.Scatter(
             x = df.index,
             y = df[column],
             mode = 'lines',
             name = column
-        )
-        data.append(trace)
+        ) for column in df.columns]
 
     layout = dict(title = title)
     fig = dict(data = data, layout = layout)
@@ -45,5 +31,6 @@ def plotly_df(df, title = ''):
     except Exception as e:
         print(e)
 
-dataset = pd.read_csv('../../data/hour_online.csv', index_col=['Time'], parse_dates=['Time'])
-plotly_df(dataset, title = "Online users")
+users = pd.read_csv('e:/data/hour_online.csv', index_col=['Time'], parse_dates=['Time'])
+plotly_df(users, title = "Online users")
+pass

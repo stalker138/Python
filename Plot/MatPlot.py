@@ -47,6 +47,8 @@ def axis(ax, minor=True, margins=(), xticks=None):
                 ax.set_xticklabels(xticks[1])
 
 def simple(ax=None, size=10):
+    ''' Отрисовка различного вида графиков
+        Проверка других элементов: title, text, labels, grid '''
     x = np.arange(size)
     y1 = 4*x
     y2 = np.sin(x)
@@ -64,13 +66,14 @@ def simple(ax=None, size=10):
     ax.grid(which="minor", linestyle="--", color="gray", linewidth=0.5, alpha=0.5)
 
     line, = ax.plot(x, y2, label="y2 = x^2")
-    scs = ax.scatter(x, y1, c="red", label="y1 = 4*x")
+    # Меньшее (кратное) кол-во точек 
+    scs = ax.scatter(x[0:size:2], y1[0:size:2], c="red", label="y1 = 4*x")
     bars = ax.bar(x, y2-y1, bottom=x, color='green', width=0.5, zorder=1, label="bars")
     lines = ax.vlines(x, np.log(x+1), np.sqrt(x), colors='blue', linewidths=5, zorder=2, label="lines")
 
-    #ax.axhline(y=50, color="red")
+    ax.axhline(y=15, color="navy")
 
-    #ax.legend()
+    ax.legend()
     ax.text(.200, .400, "Text"
             , color='blue', fontsize=16
             ,horizontalalignment='left', verticalalignment='center'
@@ -98,7 +101,7 @@ def hist(ax, xdate, candles, size):
     ''' '''
 
 def formatters():
-    '''  '''
+    ''' Форматирование даты оси X '''
     def timeFormatter(x, pos):
         print(pos, x)
         x = x*frame + start
@@ -125,14 +128,15 @@ def formatters():
     fig.subplots_adjust(left=0.05, right=0.97, top=0.97, hspace=0.2, wspace=0.2)
 
     #  Устанавливаем интервал основных и вспомогательных делений:
-    #ax[2].xaxis.set_major_locator(ticker.IndexLocator(1, 0)) # Почему-то начинается с отступом
+    ax[0].xaxis.set_major_locator(ticker.NullLocator())
+
+    ax[1].xaxis.set_major_locator(ticker.LinearLocator(5))      # Ничего нигде не инвертируется
+    #ax[1].xaxis.set_minor_locator(ticker.MultipleLocator(1))   # !!! Вообще лучше никогда не применять!!!
+
+    ax[2].xaxis.set_major_locator(ticker.LinearLocator(9))      # как заявлялось ранее
+    #ax[2].xaxis.set_major_locator(ticker.IndexLocator(1, 0))   # Почему-то начинается с отступом
     ax[2].xaxis.set_minor_locator(ticker.AutoMinorLocator(3))
     ax[2].grid()
-
-    ax[1].xaxis.set_major_locator(ticker.LinearLocator(4))      # Почему-то "инвертирует" ось x
-    #ax[1].xaxis.set_minor_locator(ticker.MultipleLocator(1))    # !!! Вообще лучше никогда не применять!!!
-
-    ax[0].xaxis.set_major_locator(ticker.NullLocator())
 
     # Создание и Установка форматера для оси X
     tf = ticker.FuncFormatter(timeFormatter)
@@ -143,7 +147,7 @@ def formatters():
         a.scatter(x, ydata, c="red")
 
     # !!! Обязательно должно быть ПОСЛЕ отрисовки!!!
-    ax[2].xaxis.set_major_locator(ticker.LinearLocator(9))      # !!!А здесь не "инвертирует"???
+    ax[1].set_xbound(870, 910)
     ax[2].set_xbound(890, 910)
     # Чтобы достичь нужного расположения сетки, мало иметь какой-то одинаковый размер фрейма (20)
     # 891, 911 уже не сработает
@@ -251,8 +255,8 @@ def redraw3():
             print("Pause!")
         plt.pause(5)
 
-simple()
-#formatters()
+#simple()
+formatters()
 #hist2()
 #axis()
 #redraw(3, flush=False)
