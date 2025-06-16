@@ -7,7 +7,6 @@ Created on 2 апр. 2019 г.
 from datetime import datetime
 
 import numpy as np
-import pandas as pd
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -56,8 +55,10 @@ def simple(ax=None, size=10):
     if ax:
         ax.clear()
     else:
-        _, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(8, 6))
+        fig.suptitle('Simple Test')
         plt.show(block=False)
+    ax.twin = ax.twinx()                # Два разномасштабных полотна
 
     ax.set_title("Графики зависимостей: y1=4*x, y2=x^2", fontsize=16)
     ax.set_xlabel("x", fontsize=14)        
@@ -65,10 +66,14 @@ def simple(ax=None, size=10):
     ax.grid(which="major", linewidth=1.2)
     ax.grid(which="minor", linestyle="--", color="gray", linewidth=0.5, alpha=0.5)
 
-    line, = ax.plot(x, y2, label="y2 = x^2")
+    line, = ax.twin.plot(x, y2, label="y2 = x^2")
+    line.set(ydata=y2-.5, color='brown')    # Перерисовать кусочек (типа [-3:]) не получится
     # Меньшее (кратное) кол-во точек 
     scs = ax.scatter(x[0:size:2], y1[0:size:2], c="red", label="y1 = 4*x")
     bars = ax.bar(x, y2-y1, bottom=x, color='green', width=0.5, zorder=1, label="bars")
+    bar = bars[4]
+    bar.set_color('red')
+    bar.set_y(bar.xy[1]-1.)
     lines = ax.vlines(x, np.log(x+1), np.sqrt(x), colors='blue', linewidths=5, zorder=2, label="lines")
 
     ax.axhline(y=15, color="navy")
@@ -81,7 +86,7 @@ def simple(ax=None, size=10):
             )
 
     ax.xaxis.set_zorder(-1)         # спрятать сетку под бары (в вызове grid это не работает)
-    ax.yaxis.tick_right()           # ось справа
+    #ax.yaxis.tick_right()           # ось справа
 
     ax.set_xbound(size-20, size)     # В чем отличие ???
     #ax.set_xlim(5, 11)      # Установка видимой области, перекрывает margins
@@ -164,13 +169,14 @@ def redraw(plots, flush=True, setx=True, refresh=20):
     def init(plots, title=""):
         ''' Инициализация '''
         # creating initial data values of x and y
-        x = np.linspace(0, 10, 100)
-        y = np.sin(x)
+        # что, в общем-то совершенно ненужно, т.к. происходит в draw
+        # x = np.linspace(0, 10, 100)
+        # y = np.sin(x)
  
         fig, ax = plt.subplots(plots, figsize=(6, 4), sharex=True)
         if title:
             fig.suptitle(title)
-        fig.subplots_adjust(left=0.1, right=0.97, top=0.97, hspace=0, wspace=0.2)
+        fig.subplots_adjust(left=0.1, right=0.97, top=0.95, hspace=0, wspace=0.2)
 
         # to run GUI event loop. Можно включить один раз (вне цикла, без периодических отключений)
         # Можно делать это в цикле (on/off), или как сейчас.
@@ -179,27 +185,42 @@ def redraw(plots, flush=True, setx=True, refresh=20):
 
         return fig, ax
 
-    def draw(a, ax, lines, t=0, setx=True):
+    def draw(a, ax, t, lines, bars, setx=True):
         ''' Изначальная Прорисовка '''
-        x = np.linspace(0, 10, 100)
+        x = np.linspace(0, t+10, 100)
         y = np.sin(x-0.5*t)             # creating new Y values
+        xb = np.arange(t, t+10)
+        yb = abs(np.cos(xb))
+        if setx:                        # Check must we update x axis?
+            ax[a].set_xlim(t, t+10)     # в отличие от анимации здесь это работает
         if lines[a]:
-            if setx:                    # Check must we update x axis?
-                lines[a].set_xdata(x+t*.2)  # Только в случае изменения x. Причем это касается
-            lines[a].set_ydata(y)           # не самой оси, а лишь сдвига собственно кривой
+            lines[a].set_xdata(x)       #
+            lines[a].set_ydata(y)       #
+            last = bars[a][-1]
+            # !!! В двух последующих операциях никак не затрагиваются
+            # "сопутствующие" атрибуты datavalues, patches, ...
+            # т.е. bars фактически является контейнером для Rectangle
+            new = ax[a].bar(xb[-1:], yb[-1:], bottom=0, color='red', width=0.2, zorder=1, label="bars")
+            last.set(y=0.2, height=0.5, color='orange') # Так можно (атрибуты не меняются)
+            bars[a] += new                              # так тоже (вообще исчезают)
+            # Впрочем, на прорисовке это, похоже, никак не отражаетя
+            #bars[a][-2] = new   #  А вот так уже нет (tuple поддерживает только сложение)
+            pass
         else:
             lines[a], = ax[a].plot(x, y)
+            bars[a] = ax[a].bar(xb, yb, bottom=0, color='green', width=0.2, zorder=1, label="bars")
             return lines[a]
  
-    def _redraw(fig, ax, lines, a, flush=False):
-        ''' Перерисовка '''
+    def _redraw(fig, ax, a, t, lines, bars, flush=False, setx=True):
+        ''' Перерисовка в т.н. ИНТЕРАКТИВНОМ режиме '''
         #plt.ion()
         if not flush:
             flush = (a == len(lines)-1) # Сброс только для последнего графика
+        draw(a, ax, t, lines, bars, setx=setx)
         if flush:
             print("Plot №"+str(a), fig.texts)
             fig.canvas.draw()       # drawing updated values
-            plt.show()   # Без этих двух строк вроде как ничего не работает
+            plt.show()              # Без этих двух строк вроде как ничего не работает
             #plt.draw()             # Альтернативные способы
             #fig.show()             # и всевозможные их комбинации ничего не мяняют
             # Без этого то вообще не прорисовывается, то мерцает при перерисовке.
@@ -213,27 +234,27 @@ def redraw(plots, flush=True, setx=True, refresh=20):
         # выполняться цикл (без нового открытия окна)
 
     def redraw2(plots):
-        ''' Перерисовка графика в режиме "замыкания" для моделирования реальной ситуации '''
+        ''' Перерисовка графика в режиме "замыкания",
+            позволяющим сохранять внутри такие пер-е, как fig, ax, lines '''
         fig, ax = init(plots, "Closure")
         lines = [None]*plots
+        bars = [None]*plots
         def _redraw2(t, a, flush=flush, setx=True):
-            nonlocal lines
-            draw(a, ax, lines, t, setx=setx)
-            _redraw(fig, ax, lines, a, flush=flush)
+            _redraw(fig, ax, a, t, lines, bars, flush=flush, setx=setx)
         return _redraw2
 
+    # Инициализация для классического обновления
     fig, ax = init(plots, "Common")
     lines = [None]*plots
-    for a in range(plots):
-        draw(a, ax, lines, setx=setx)
-
+    bars = [None]*plots
+    # ... и для обновления через замыкания
     _redraw2 = redraw2(plots) 
+
     for t in range(50):
         for a in range(plots):
-            draw(a, ax, lines, t+1, setx=setx)
-            _redraw(fig, ax, lines, a, flush=flush)      # Реализация отдельными функциями
+            _redraw(fig, ax, a, t, lines, bars, flush=flush, setx=False)  # Реализация отдельными функциями
+            _redraw2(t, a, setx=setx)                               # Замыкание (fig, ax, lines) скрыты внутри
 
-            _redraw2(t, a, setx=setx)       # Замыкание
         # !!! Ключевой момент - нельзя использовать time.sleep()
         print("Pause")
         plt.pause(refresh)
@@ -255,10 +276,35 @@ def redraw3():
             print("Pause!")
         plt.pause(5)
 
+from matplotlib.animation import FuncAnimation
+def animation():
+    fig, ax = plt.subplots()
+    line, = ax.plot([], [], 'r-')
+    lim = 5
+
+    def init():
+        ax.set_xlim(0, lim)
+        ax.set_ylim(-1, 1)
+        return line,
+
+    def update(frame):
+        x, y = line.get_data()
+        size = x.size
+        x = np.append(x, frame)
+        y = np.append(y, np.sin(frame))
+        if (size > lim):                        # !!! Никакой перерисовки оси
+            ax.set_xlim(x[size-lim], x[-1])     # не происходит
+        line.set_data(x, y)
+        print("Updated!!!", len(x), frame, x[-1])
+        return line,
+
+    ani = FuncAnimation(fig, update, frames=range(100000), interval=200, init_func=init, blit=True)
+    plt.show()
+
 #simple()
-formatters()
-#hist2()
+#formatters()
 #axis()
-#redraw(3, flush=False)
+redraw(3, flush=False)
 #redraw3()
+#animation()
 pass

@@ -66,36 +66,51 @@ class MyTree(ttk.Treeview):
 
         return item
 
-root = tk.Tk()
+def main():
+    style = ttk.Style()
+    style.theme_use("default")
 
-style = ttk.Style()
-style.theme_use("default")
+    # Решение проблемы с подсветкой строк на Python 3.8
+    # Взято отсюда: https://bugs.python.org/issue36468
+    def fixed_map(option):
+        return [elm for elm in style.map('Treeview', query_opt=option) if elm[:2] != ('!disabled', '!selected')]
+    #style.map('Treeview', foreground=fixed_map('foreground'), background=fixed_map('background'))
 
-table1 = Table1(root, headings=('aaa', 'bbb', 'ccc'), rows=((123, 456, 789), ('abc', 'def', 'ghk')))
-table1.pack(expand=tk.YES, fill=tk.BOTH)
+    root = tk.Tk()
 
-table2 = Table2(root)
-table2.pack()
-table2.cells[1][1].value.set('test')
-table2.cells[2][2].value.set( table2.cells[1][1].value.get() )
+    table1 = Table1(root, headings=('aaa', 'bbb', 'ccc'), rows=((123, 456, 789), ('abc', 'def', 'ghk')))
+    table1.pack(expand=tk.YES, fill=tk.BOTH)
 
-# Решение проблемы с подсветкой строк на Python 3.8
-# Взято отсюда: https://bugs.python.org/issue36468
-def fixed_map(option):
-    return [elm for elm in style.map('Treeview', query_opt=option) if elm[:2] != ('!disabled', '!selected')]
-#style.map('Treeview', foreground=fixed_map('foreground'), background=fixed_map('background'))
+    table2 = Table2(root)
+    table2.pack()
+    table2.cells[1][1].value.set('test')
+    table2.cells[2][2].value.set( table2.cells[1][1].value.get() )
 
-columns = ("Tree", "Название", "Автор", "Статус")
-tree = MyTree(root, columns=columns[1:])
-tree.pack()
+    # Создание таблицы с заданными колонками
+    columns = ("Tree", "Название", "Автор", "Статус")
+    tree = MyTree(root, columns=columns[1:])
+    tree.pack()
+    for i, heading in enumerate(columns):
+        tree.heading('#'+str(i), text=heading)
 
-for i, heading in enumerate(columns):
-    tree.heading('#'+str(i), text=heading)
+    # Добавление записей
+    root_item = tree.insert('', tk.END, text="root", open=True)
+    items = (('Капитанская дочка', 'Пушкин', 'На руках'),
+             ('Книга 2', 'Автор 2', 'Просрочена'),
+             ('Книга 3', 'Автор 2', 'Сдана'))
+    item0 = tree.insert(root_item, tk.END, text="Книга 1", values=items[0])
+    tree.insert(root_item, tk.END, text="Книга 2", values=items[1])
+    tree.insert(root_item, tk.END, text="Книга 3", values=items[2])
+    sel = tree.selection()              # sel = ()
+    tree.selection_set(item0)           # Так работает
+    #tree.selection_set(items[1])        # А так выдает ошибку
+    tree.selection_set('I003')          # Так тоже работает! Нумерация начинается с root_item (I001)
+    sel = tree.selection()              # sel = ('I003',)
+    try:
+        tree.selection_set('I005')          # Exception
+    except Exception as e:
+        print("No SuchItem!", e)
 
-root_item = tree.insert('', tk.END, text="root", open=True)
+    root.mainloop()
 
-tree.insert(root_item, tk.END, text="Книга 1", values=('Капитанская дочка', 'Пушкин', 'На руках'))
-tree.insert(root_item, tk.END, text="Книга 2", values=('Книга 2', 'Автор 2', 'Просрочена'))
-tree.insert(root_item, tk.END, text="Книга 3", values=('Книга 3', 'Автор 2', 'Сдана'))
-
-root.mainloop()
+main()

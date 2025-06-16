@@ -13,23 +13,42 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 import matplotlib.ticker as ticker
 
 import tkinter as tk
+import tkinter.ttk as ttk
+
 def mptk():
+    ''' Простейшаяфункия размещенияграфиков на вкладках tkinter '''
     root = tk.Tk()
-    parent = tk.Frame(root,width=1500,height=100,bg="darkred", bd=20)  # bd обязателен
 
-    fig = plt.Figure(figsize=(5, 4), dpi=100)
+    parent = tk.Toplevel(root,width=1500,height=100,bg="darkred", bd=20)  # bd обязателен
+    tabs = ttk.Notebook(parent)  
+    tab1 = ttk.Frame(parent)            # Общая информация
+    tab2 = ttk.Frame(parent)            # График торгов  
+    tabs.add(tab1, text='Общее')  
+    tabs.add(tab2, text='Торги')  
+    tabs.pack(expand=1, fill='both')  
+
     t = np.arange(0, 3, .01)
-    fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+    f1 = plt.Figure(figsize=(5, 4), dpi=100)
+    ax1 = f1.add_subplot(111)
+    ax1.plot(t, 2 * np.sin(2 * np.pi * t))
 
-    canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
+    canvas = FigureCanvasTkAgg(f1, master=tab1)  # A tk.DrawingArea.
     canvas.draw()
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-    toolbar = NavigationToolbar2Tk(canvas, root)
+    toolbar = NavigationToolbar2Tk(canvas, tab1)
     toolbar.update()
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-#mptk()
+    ''' Подобный вызов (subplots) приводит к задвоению графиков.
+        Все рекомендуют использовать Figure, но не объясняют почему.
+    f2, ax2 = plt.subplots()
+    ax2.plot(t, 2 * np.sin(2 * np.pi * t))
+    canvas = FigureCanvasTkAgg(f2, master=tab2)  # A tk.DrawingArea.
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    '''
+
+    root.mainloop()
 
 def _print_event(event, attr_list):
     print()
@@ -150,3 +169,6 @@ def navigator():
     app = MyApp(root)
     app.plot()
     root.mainloop()
+
+mptk()
+pass
