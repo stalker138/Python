@@ -2,6 +2,7 @@
 Created on 18 июн. 2020 г.
 
 @author: Alex
+Виды функций, передача аргументов, аннотации, атрибуты, ...
 '''
 
 tt = (1, 2)
@@ -133,4 +134,19 @@ def test_nested():
     def nested(*a):
         print("a = ", *a)
 
+# Использование атрибутов, в т.ч доступ из самой ф-ции к собственным атрибутам
+def selfref(f):
+    f.func_defaults = f.func_defaults[:-1] + (f,)
+    return f
+@selfref
+def foo(verb, adverb='swiftly', self=None):
+    return '%s %s %s' % (self.subject, verb, adverb)
+def test_selfref():
+    ''' Использование атрибутов '''
+    foo.subject = 'Fred'
+    bar = foo
+    del foo
+    bar('runs')
+
+test_selfref()
 test_common()
